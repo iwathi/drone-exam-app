@@ -165,7 +165,7 @@ function ProgressViewer() {
                         onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                         title="教則のPDFを開く"
                       >
-                        {categoryMap[row.section] || row.section}
+                        {categoryMap[row.section] || row.originalRef || row.section}
                       </a>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
