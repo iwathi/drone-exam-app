@@ -3,6 +3,9 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import ExamMode from './components/ExamMode';
 import StudyMode from './components/StudyMode';
+import StudyModeSetup from './components/StudyModeSetup';
+import ManualViewer from './components/ManualViewer';
+import ProgressViewer from './components/ProgressViewer';
 import Result from './components/Result';
 import QuestionManager from './components/QuestionManager';
 import initialQuestions from './data/questions.json';
@@ -30,7 +33,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard questionsCount={questions.length} />} />
         <Route path="/exam" element={<ExamMode questions={questions} />} />
+        <Route path="/study-setup" element={<StudyModeSetup questions={questions} />} />
         <Route path="/study" element={<StudyMode questions={questions} />} />
+        <Route path="/manual" element={<ManualViewer />} />
+        <Route path="/progress" element={<ProgressViewer />} />
         <Route path="/result" element={<Result questions={questions} />} />
         <Route path="/manage" element={<QuestionManager questions={questions} saveQuestions={saveQuestions} />} />
       </Routes>

@@ -1,11 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Home } from 'lucide-react';
+import { useAuth } from '../AuthContext';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 function Result() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { answers, examQuestions } = location.state || { answers: {}, examQuestions: [] };
+
+  useEffect(() => {
+    // 模擬試験のスコアを保存する処理
+    if (!currentUser || examQuestions.length === 0 || !db) return;
+
+    const saveScore = async () => {
+      let correctCount = 0;
+      examQuestions.forEach((q, idx) => {
+        if (answers[idx] === q.correctAnswerIndex) {
+          correctCount++;
+        }
+      });
+
+      try {
+        await addDoc(collection(db, `users/${currentUser.uid}/progress`), {
+          type: 'exam',
+          score: correctCount,
+          total: examQuestions.length,
+          timestamp: serverTimestamp()
+        });
+      } catch (e) {
+        console.error("Error saving progress: ", e);
+      }
+    };
+
+    saveScore();
+  }, [currentUser, answers, examQuestions]);
 
   if (examQuestions.length === 0) {
     return (
