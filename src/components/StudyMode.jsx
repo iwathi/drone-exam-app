@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useAuth } from '../AuthContext';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 function StudyMode({ questions: defaultQuestions }) {
   const navigate = useNavigate();
@@ -11,13 +14,27 @@ function StudyMode({ questions: defaultQuestions }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [answerHistory, setAnswerHistory] = useState([]);
+  const { currentUser } = useAuth();
 
   const currentQ = questions[currentIndex];
 
-  const handleAnswer = (idx) => {
+  const handleAnswer = (index) => {
     if (isAnswered) return;
-    setSelectedAnswer(idx);
+    setSelectedAnswer(index);
     setIsAnswered(true);
+    if (index === questions[currentIndex].correctAnswerIndex) {
+      setCorrectCount(prev => prev + 1);
+    }
+    setAnswerHistory(prev => [
+      ...prev,
+      {
+        questionId: questions[currentIndex].id,
+        reference: questions[currentIndex].reference || 'その他',
+        isCorrect: index === questions[currentIndex].correctAnswerIndex
+      }
+    ]);
   };
 
   const nextQuestion = () => {
@@ -39,15 +56,34 @@ function StudyMode({ questions: defaultQuestions }) {
     if (!refStr) return null;
     let page = 1;
     if (refStr.startsWith('2.')) page = 5;
+    if (refStr.startsWith('3.1.1')) page = 8;
     if (refStr.startsWith('3.1')) page = 9;
     if (refStr.startsWith('3.2')) page = 25;
     if (refStr.startsWith('4.1')) page = 31;
     if (refStr.startsWith('4.4')) page = 35;
+    if (refStr.startsWith('4.5')) page = 41;
     if (refStr.startsWith('5.')) page = 47;
     if (refStr.startsWith('6.')) page = 51;
-    
-    // ページ指定URLを生成
     return `https://www.mlit.go.jp/koku/content/001860312.pdf#page=${page}`;
+  };
+
+  const handleFinish = async () => {
+    // 1問以上解いていてログインしていれば進捗を保存
+    if (currentUser && currentIndex > 0 && db) {
+      try {
+        await addDoc(collection(db, `users/${currentUser.uid}/progress`), {
+          type: 'study',
+          mode: mode,
+          score: correctCount,
+          total: isAnswered ? currentIndex + 1 : currentIndex,
+          details: answerHistory,
+          timestamp: serverTimestamp()
+        });
+      } catch (e) {
+        console.error("Error saving study progress: ", e);
+      }
+    }
+    navigate('/');
   };
 
   return (
@@ -112,13 +148,13 @@ function StudyMode({ questions: defaultQuestions }) {
       )}
       
       <div className="flex justify-between">
-        <button className="btn btn-outline" onClick={() => navigate('/')}>
+        <button className="btn btn-outline" onClick={handleFinish}>
           終了して戻る
         </button>
         
         {isAnswered && (
-          <button className="btn" onClick={nextQuestion}>
-            {currentIndex < questions.length - 1 ? '次の問題へ' : 'トップに戻る'}
+          <button className="btn" onClick={currentIndex < questions.length - 1 ? nextQuestion : handleFinish}>
+            {currentIndex < questions.length - 1 ? '次の問題へ' : '学習を完了する'}
           </button>
         )}
       </div>

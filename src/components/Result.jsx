@@ -17,10 +17,17 @@ function Result() {
 
     const saveScore = async () => {
       let correctCount = 0;
+      const details = [];
       examQuestions.forEach((q, idx) => {
-        if (answers[idx] === q.correctAnswerIndex) {
+        const isCorrect = answers[idx] === q.correctAnswerIndex;
+        if (isCorrect) {
           correctCount++;
         }
+        details.push({
+          questionId: q.id,
+          reference: q.reference || 'その他',
+          isCorrect: isCorrect
+        });
       });
 
       try {
@@ -28,6 +35,7 @@ function Result() {
           type: 'exam',
           score: correctCount,
           total: examQuestions.length,
+          details: details,
           timestamp: serverTimestamp()
         });
       } catch (e) {

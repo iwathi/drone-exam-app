@@ -89,20 +89,28 @@ function ExamMode({ questions }) {
         ))}
       </div>
       
-      <div className="flex justify-between">
-        <button className="btn btn-outline" onClick={prevQuestion} disabled={currentIndex === 0}>
-          前へ
-        </button>
+      <div className="flex justify-between items-center mt-4">
+        <div>
+          <button className="btn btn-outline" onClick={prevQuestion} disabled={currentIndex === 0}>
+            前へ
+          </button>
+        </div>
         
-        {currentIndex < examQuestions.length - 1 ? (
-          <button className="btn" onClick={nextQuestion}>
-            次へ
+        <div className="flex gap-4">
+          <button className="btn btn-outline" style={{ borderColor: 'var(--danger-color)', color: 'var(--danger-color)' }} onClick={finishExam}>
+            試験を終了する
           </button>
-        ) : (
-          <button className="btn btn-danger" onClick={finishExam}>
-            試験終了
-          </button>
-        )}
+          
+          {currentIndex < examQuestions.length - 1 ? (
+            <button className="btn" onClick={nextQuestion}>
+              次へ
+            </button>
+          ) : (
+            <button className="btn btn-success" onClick={finishExam}>
+              全問終了して採点
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
