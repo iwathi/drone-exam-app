@@ -5,6 +5,20 @@ import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import allQuestions from '../data/questions.json';
+import manualData from '../data/manual_summary.json';
+
+// Build a mapping from prefix to title
+const categoryMap = {};
+manualData.forEach(chapter => {
+  chapter.subsections.forEach(sub => {
+    const match = sub.title.match(/^[\d\.]+/);
+    if (match) {
+      let refKey = match[0];
+      if (refKey.endsWith('.')) refKey = refKey.slice(0, -1);
+      categoryMap[refKey] = sub.title;
+    }
+  });
+});
 
 function ProgressViewer() {
   const navigate = useNavigate();
@@ -141,7 +155,19 @@ function ProgressViewer() {
                 
                 return (
                   <tr key={row.section} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '1rem', fontWeight: 'bold' }}>{row.section}</td>
+                    <td style={{ padding: '1rem', fontWeight: 'bold' }}>
+                      <a 
+                        href="https://www.mlit.go.jp/koku/content/001860312.pdf" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--primary-color)', textDecoration: 'none' }}
+                        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                        title="教則のPDFを開く"
+                      >
+                        {categoryMap[row.section] || row.section}
+                      </a>
+                    </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: row.correct > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{row.correct}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: row.incorrect > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{row.incorrect}</td>
