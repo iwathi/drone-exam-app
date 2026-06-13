@@ -146,6 +146,7 @@ function ProgressViewer() {
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--success-color)' }}>正解した回数</th>
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--danger-color)' }}>間違えた回数</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>正答率</th>
+                <th style={{ padding: '1rem', textAlign: 'center' }}>復習</th>
               </tr>
             </thead>
             <tbody>
@@ -179,6 +180,27 @@ function ProgressViewer() {
                       ) : (
                         <span className="text-secondary">-</span>
                       )}
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                        onClick={() => {
+                          const chapterQuestions = allQuestions.filter(q => {
+                            const ref = q.reference || '';
+                            return ref.startsWith(row.section);
+                          });
+                          navigate('/study', { 
+                            state: { 
+                              mode: 'chapter', 
+                              chapterName: categoryMap[row.section] || row.originalRef || row.section, 
+                              questions: chapterQuestions 
+                            } 
+                          });
+                        }}
+                      >
+                        重点学習
+                      </button>
                     </td>
                   </tr>
                 );
