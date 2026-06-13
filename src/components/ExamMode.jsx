@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, AlertTriangle } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../AuthContext';
 
 function ExamMode({ questions }) {
   const navigate = useNavigate();
