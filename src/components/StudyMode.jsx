@@ -51,20 +51,10 @@ function StudyMode({ questions: defaultQuestions }) {
 
   const isCorrect = selectedAnswer === currentQ.correctAnswerIndex;
 
-  // 教則PDFのページマッピング（目安）
+  // 教則PDFへのリンク（ページ先頭を開く）
   const getPdfLink = (refStr) => {
     if (!refStr) return null;
-    let page = 1;
-    if (refStr.startsWith('2.')) page = 5;
-    if (refStr.startsWith('3.1.1')) page = 8;
-    if (refStr.startsWith('3.1')) page = 9;
-    if (refStr.startsWith('3.2')) page = 25;
-    if (refStr.startsWith('4.1')) page = 31;
-    if (refStr.startsWith('4.4')) page = 35;
-    if (refStr.startsWith('4.5')) page = 41;
-    if (refStr.startsWith('5.')) page = 47;
-    if (refStr.startsWith('6.')) page = 51;
-    return `https://www.mlit.go.jp/koku/content/001860312.pdf#page=${page}`;
+    return `https://www.mlit.go.jp/koku/content/001860312.pdf`;
   };
 
   const handleFinish = async () => {

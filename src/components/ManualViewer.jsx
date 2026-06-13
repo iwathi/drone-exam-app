@@ -48,12 +48,12 @@ function ManualViewer() {
                     <h4 style={{ marginBottom: '0.5rem', color: 'var(--primary-color)' }}>{sub.title}</h4>
                     <p style={{ lineHeight: '1.6', marginBottom: '0.5rem' }}>{sub.summary}</p>
                     <a 
-                      href={`https://www.mlit.go.jp/koku/content/001860312.pdf#page=${sub.pdfPage}`} 
+                      href={`https://www.mlit.go.jp/koku/content/001860312.pdf`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       style={{ fontSize: '0.875rem', color: 'var(--warning-color)', textDecoration: 'underline' }}
                     >
-                      教則の該当ページ（P.{sub.pdfPage}）を開く
+                      教則のPDFを開く
                     </a>
                   </div>
                 ))}
