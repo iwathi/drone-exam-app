@@ -127,10 +127,13 @@ function ProgressViewer() {
         <h2 style={{ marginBottom: 0 }}>学習の進捗（項目別）</h2>
       </div>
 
-      <div className="flex items-center gap-2 mb-6 text-primary">
+      <div className="flex items-center gap-2 mb-2 text-primary">
         <TrendingUp size={24} />
         <h3 style={{ margin: 0 }}>教則セクション別の成績</h3>
       </div>
+      <p className="text-secondary mb-6" style={{ fontSize: '0.9rem' }}>
+        ※ カテゴリ名をクリックすると、その項目に関連する問題に絞って「重点学習」を開始できます。
+      </p>
 
       {loading ? (
         <p>データを読み込み中...</p>
@@ -146,7 +149,6 @@ function ProgressViewer() {
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--success-color)' }}>正解した回数</th>
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--danger-color)' }}>間違えた回数</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>正答率</th>
-                <th style={{ padding: '1rem', textAlign: 'center' }}>復習</th>
               </tr>
             </thead>
             <tbody>
@@ -157,34 +159,21 @@ function ProgressViewer() {
                 return (
                   <tr key={row.section} style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '1rem', fontWeight: 'bold' }}>
-                      <a 
-                        href="https://www.mlit.go.jp/koku/content/001860312.pdf" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{ color: 'var(--primary-color)', textDecoration: 'none' }}
+                      <button 
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          color: 'var(--primary-color)', 
+                          textDecoration: 'none', 
+                          cursor: 'pointer',
+                          padding: 0,
+                          font: 'inherit',
+                          fontWeight: 'bold',
+                          textAlign: 'left'
+                        }}
                         onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
                         onMouseOut={(e) => e.target.style.textDecoration = 'none'}
-                        title="教則のPDFを開く"
-                      >
-                        {categoryMap[row.section] || row.originalRef || row.section}
-                      </a>
-                    </td>
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center', color: row.correct > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{row.correct}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center', color: row.incorrect > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{row.incorrect}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      {totalAttempts > 0 ? (
-                        <div style={{ color: rate >= 80 ? 'var(--success-color)' : rate >= 60 ? 'var(--warning-color)' : 'var(--danger-color)', fontWeight: 'bold' }}>
-                          {rate}%
-                        </div>
-                      ) : (
-                        <span className="text-secondary">-</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button 
-                        className="btn btn-outline" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                        title="この項目の重点学習を開始する"
                         onClick={() => {
                           const chapterQuestions = allQuestions.filter(q => {
                             const ref = q.reference || '';
@@ -199,8 +188,20 @@ function ProgressViewer() {
                           });
                         }}
                       >
-                        重点学習
+                        {categoryMap[row.section] || row.originalRef || row.section}
                       </button>
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: row.correct > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{row.correct}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: row.incorrect > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{row.incorrect}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      {totalAttempts > 0 ? (
+                        <div style={{ color: rate >= 80 ? 'var(--success-color)' : rate >= 60 ? 'var(--warning-color)' : 'var(--danger-color)', fontWeight: 'bold' }}>
+                          {rate}%
+                        </div>
+                      ) : (
+                        <span className="text-secondary">-</span>
+                      )}
                     </td>
                   </tr>
                 );
