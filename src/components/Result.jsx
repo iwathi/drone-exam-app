@@ -12,39 +12,10 @@ function Result() {
   const { answers, examQuestions } = location.state || { answers: {}, examQuestions: [] };
 
   useEffect(() => {
-    // 模擬試験のスコアを保存する処理
-    if (!currentUser || examQuestions.length === 0 || !db) return;
-
-    const saveScore = async () => {
-      let correctCount = 0;
-      const details = [];
-      examQuestions.forEach((q, idx) => {
-        const isCorrect = answers[idx] === q.correctAnswerIndex;
-        if (isCorrect) {
-          correctCount++;
-        }
-        details.push({
-          questionId: q.id,
-          reference: q.reference || 'その他',
-          isCorrect: isCorrect
-        });
-      });
-
-      try {
-        await addDoc(collection(db, `users/${currentUser.uid}/progress`), {
-          type: 'exam',
-          score: correctCount,
-          total: examQuestions.length,
-          details: details,
-          timestamp: serverTimestamp()
-        });
-      } catch (e) {
-        console.error("Error saving progress: ", e);
-      }
-    };
-
-    saveScore();
-  }, [currentUser, answers, examQuestions]);
+    if (!examQuestions || !answers) {
+      navigate('/');
+    }
+  }, [examQuestions, answers, navigate]);
 
   if (examQuestions.length === 0) {
     return (

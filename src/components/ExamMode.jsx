@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, AlertTriangle } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 function ExamMode({ questions }) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [examQuestions, setExamQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes
+  const [sessionDocRef, setSessionDocRef] = useState(null);
   
   useEffect(() => {
-    // 実際のCBTは50問ですが、足りない場合はある分だけで実施
-    // ランダムにシャッフルして最大50問抽出
+    if (currentUser) {
+      setSessionDocRef(doc(collection(db, `users/${currentUser.uid}/progress`)));
+    }
     const shuffled = [...questions].sort(() => 0.5 - Math.random());
     setExamQuestions(shuffled.slice(0, 50));
-  }, [questions]);
+  }, [questions, currentUser]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -27,8 +33,37 @@ function ExamMode({ questions }) {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  const handleAnswer = (index) => {
-    setAnswers({ ...answers, [currentIndex]: index });
+  const handleAnswer = async (index) => {
+    const newAnswers = { ...answers, [currentIndex]: index };
+    setAnswers(newAnswers);
+
+    if (sessionDocRef) {
+      let correctCount = 0;
+      const details = [];
+      examQuestions.forEach((q, idx) => {
+        if (newAnswers[idx] !== undefined) {
+          const isCorrect = newAnswers[idx] === q.correctAnswerIndex;
+          if (isCorrect) correctCount++;
+          details.push({
+            questionId: q.id,
+            reference: q.reference || 'その他',
+            isCorrect: isCorrect
+          });
+        }
+      });
+
+      try {
+        await setDoc(sessionDocRef, {
+          type: 'exam',
+          score: correctCount,
+          total: details.length,
+          details: details,
+          timestamp: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error updating exam progress: ", e);
+      }
+    }
   };
 
   const nextQuestion = () => {
@@ -40,6 +75,12 @@ function ExamMode({ questions }) {
   const prevQuestion = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const handleEarlyExit = () => {
+    if (window.confirm('試験を中断してここまでの結果を保存しますか？')) {
+      finishExam();
     }
   };
 
@@ -89,28 +130,44 @@ function ExamMode({ questions }) {
         ))}
       </div>
       
-      <div className="flex justify-between items-center mt-4">
-        <div>
-          <button className="btn btn-outline" onClick={prevQuestion} disabled={currentIndex === 0}>
-            前へ
-          </button>
-        </div>
+      <div className="flex justify-between mt-auto">
+        <button 
+          className="btn btn-outline" 
+          onClick={prevQuestion}
+          disabled={currentIndex === 0}
+        >
+          前の問題へ
+        </button>
         
-        <div className="flex gap-4">
-          <button className="btn btn-outline" style={{ borderColor: 'var(--danger-color)', color: 'var(--danger-color)' }} onClick={finishExam}>
-            試験を終了する
+        {currentIndex < examQuestions.length - 1 ? (
+          <button 
+            className="btn" 
+            onClick={nextQuestion}
+            disabled={answers[currentIndex] === undefined}
+          >
+            次の問題へ
           </button>
-          
-          {currentIndex < examQuestions.length - 1 ? (
-            <button className="btn" onClick={nextQuestion}>
-              次へ
-            </button>
-          ) : (
-            <button className="btn btn-success" onClick={finishExam}>
-              全問終了して採点
-            </button>
-          )}
-        </div>
+        ) : (
+          <button 
+            className="btn" 
+            onClick={finishExam}
+            disabled={answers[currentIndex] === undefined}
+            style={{ backgroundColor: 'var(--success-color)' }}
+          >
+            試験終了
+          </button>
+        )}
+      </div>
+
+      <div className="mt-8 pt-4" style={{ borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+        <button 
+          className="btn btn-outline" 
+          onClick={handleEarlyExit}
+          style={{ color: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}
+        >
+          <AlertTriangle size={18} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+          試験を中断して終了する
+        </button>
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 function StudyMode({ questions: defaultQuestions }) {
   const navigate = useNavigate();
@@ -17,24 +17,55 @@ function StudyMode({ questions: defaultQuestions }) {
   const [correctCount, setCorrectCount] = useState(0);
   const [answerHistory, setAnswerHistory] = useState([]);
   const { currentUser } = useAuth();
+  
+  // セッションドキュメントの参照を保持
+  const [sessionDocRef, setSessionDocRef] = useState(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      setSessionDocRef(doc(collection(db, `users/${currentUser.uid}/progress`)));
+    }
+  }, [currentUser]);
 
   const currentQ = questions[currentIndex];
 
-  const handleAnswer = (index) => {
+  const handleAnswer = async (index) => {
     if (isAnswered) return;
     setSelectedAnswer(index);
     setIsAnswered(true);
-    if (index === questions[currentIndex].correctAnswerIndex) {
-      setCorrectCount(prev => prev + 1);
+
+    const isCorrect = index === questions[currentIndex].correctAnswerIndex;
+    let newCorrectCount = correctCount;
+    if (isCorrect) {
+      newCorrectCount = correctCount + 1;
+      setCorrectCount(newCorrectCount);
     }
-    setAnswerHistory(prev => [
-      ...prev,
+    
+    const newHistory = [
+      ...answerHistory,
       {
         questionId: questions[currentIndex].id,
         reference: questions[currentIndex].reference || 'その他',
-        isCorrect: index === questions[currentIndex].correctAnswerIndex
+        isCorrect: isCorrect
       }
-    ]);
+    ];
+    setAnswerHistory(newHistory);
+
+    // 回答のたびにFirestoreを更新（中断しても残るようにする）
+    if (sessionDocRef) {
+      try {
+        await setDoc(sessionDocRef, {
+          type: 'study',
+          mode: mode,
+          score: newCorrectCount,
+          total: newHistory.length,
+          details: newHistory,
+          timestamp: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error updating progress:", e);
+      }
+    }
   };
 
   const nextQuestion = () => {
@@ -57,22 +88,8 @@ function StudyMode({ questions: defaultQuestions }) {
     return `https://www.mlit.go.jp/koku/content/001860312.pdf`;
   };
 
-  const handleFinish = async () => {
-    // 1問以上解いていてログインしていれば進捗を保存
-    if (currentUser && currentIndex > 0 && db) {
-      try {
-        await addDoc(collection(db, `users/${currentUser.uid}/progress`), {
-          type: 'study',
-          mode: mode,
-          score: correctCount,
-          total: isAnswered ? currentIndex + 1 : currentIndex,
-          details: answerHistory,
-          timestamp: serverTimestamp()
-        });
-      } catch (e) {
-        console.error("Error saving study progress: ", e);
-      }
-    }
+  const handleFinish = () => {
+    // 終了時は単にダッシュボードに戻る（保存は都度行っているため不要）
     navigate('/');
   };
 
