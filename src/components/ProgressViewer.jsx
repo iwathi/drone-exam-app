@@ -188,6 +188,12 @@ function ProgressViewer() {
         <h2 style={{ marginBottom: 0 }}>学習の進捗（項目別）</h2>
       </div>
 
+      <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', borderLeft: '4px solid var(--primary-color)', padding: '1rem', marginBottom: '2rem', borderRadius: '0.25rem', fontSize: '0.95rem', lineHeight: '1.5' }}>
+        <strong>💡 学習達成率についてのご注意</strong><br/>
+        この画面の数値は「マスターした（正解した）ユニークな問題の数」を示しています。<br/>
+        すでに正解したことのある同じ問題に何度正解しても、達成率は上がりません。まだ解いていない問題や、間違えた問題に重点的に挑戦して達成率100%を目指しましょう！
+      </div>
+
       <div className="flex items-center gap-2 mb-2 text-primary">
         <TrendingUp size={24} />
         <h3 style={{ margin: 0 }}>教則セクション別の成績</h3>
