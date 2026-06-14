@@ -102,6 +102,7 @@ function ProgressViewer() {
           const data = doc.data();
           if (data.details && Array.isArray(data.details)) {
             data.details.forEach(detail => {
+              const match = detail.reference ? detail.reference.match(/^[\d\.]+/) : null;
               let refKey = 'その他';
               let chapterName = 'その他';
 
