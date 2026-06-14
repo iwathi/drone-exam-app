@@ -304,6 +304,7 @@ function ProgressViewer() {
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: correctCount > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{correctCount}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: incorrectCount > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{incorrectCount}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--warning-color)', fontWeight: 'bold' }}>{row.flaggedCount > 0 ? row.flaggedCount : '0'}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <div style={{ color: rate >= 100 ? 'var(--success-color)' : rate >= 50 ? 'var(--warning-color)' : 'var(--danger-color)', fontWeight: 'bold' }}>
                         {rate}%
