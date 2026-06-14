@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Bookmark } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 function StudyMode({ questions: defaultQuestions }) {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ function StudyMode({ questions: defaultQuestions }) {
   const [isAnswered, setIsAnswered] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [answerHistory, setAnswerHistory] = useState([]);
+  const [flaggedIds, setFlaggedIds] = useState(new Set());
   const { currentUser } = useAuth();
   
   // セッションドキュメントの参照を保持
@@ -24,8 +25,31 @@ function StudyMode({ questions: defaultQuestions }) {
   useEffect(() => {
     if (currentUser) {
       setSessionDocRef(doc(collection(db, `users/${currentUser.uid}/progress`)));
+      
+      // フラグ状態の取得
+      getDoc(doc(db, `users/${currentUser.uid}/userdata/flags`)).then(docSnap => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFlaggedIds(new Set(Object.keys(data).filter(k => data[k] === true)));
+        }
+      });
     }
   }, [currentUser]);
+
+  const toggleFlag = async (questionId) => {
+    if (!currentUser) return;
+    const newFlagged = new Set(flaggedIds);
+    if (newFlagged.has(questionId)) {
+      newFlagged.delete(questionId);
+    } else {
+      newFlagged.add(questionId);
+    }
+    setFlaggedIds(newFlagged);
+    
+    const flagsObj = {};
+    Array.from(newFlagged).forEach(id => { flagsObj[id] = true; });
+    await setDoc(doc(db, `users/${currentUser.uid}/userdata/flags`), flagsObj);
+  };
 
   const currentQ = questions[currentIndex];
 
@@ -106,7 +130,19 @@ function StudyMode({ questions: defaultQuestions }) {
 
       <p className="text-secondary mb-4">問題 {currentIndex + 1} / {questions.length}</p>
       
-      <h3 className="mb-6">{currentQ.question}</h3>
+      <div className="flex justify-between items-start mb-6 gap-4">
+        <h3 style={{ margin: 0, flex: 1 }}>{currentQ.question}</h3>
+        <button 
+          onClick={() => toggleFlag(currentQ.id)}
+          style={{ 
+            background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem',
+            color: flaggedIds.has(currentQ.id) ? 'var(--warning-color)' : 'var(--text-secondary)'
+          }}
+          title={flaggedIds.has(currentQ.id) ? "不安な問題から外す" : "不安な問題としてマークする"}
+        >
+          <Bookmark size={24} fill={flaggedIds.has(currentQ.id) ? 'currentColor' : 'none'} />
+        </button>
+      </div>
       
       <div className="flex flex-col mb-6">
         {currentQ.options.map((option, idx) => {

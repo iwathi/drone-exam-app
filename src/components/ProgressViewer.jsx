@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, doc, getDoc } from 'firebase/firestore';
 import allQuestions from '../data/questions.json';
 import manualData from '../data/manual_summary.json';
 
@@ -77,7 +77,8 @@ function ProgressViewer() {
             originalRef: q.reference,
             totalAvailable: 0,
             correctQuestionIds: new Set(),
-            incorrectQuestionIds: new Set()
+            incorrectQuestionIds: new Set(),
+            flaggedCount: 0
           };
         }
         baseStats[refKey].totalAvailable++;
@@ -97,6 +98,45 @@ function ProgressViewer() {
         // 2. Firestoreから学習履歴を取得して正解・不正解を集計
         const q = query(collection(db, `users/${currentUser.uid}/progress`));
         const querySnapshot = await getDocs(q);
+        
+        // フラグ状態の取得
+        const flagsDoc = await getDoc(doc(db, `users/${currentUser.uid}/userdata/flags`));
+        const flaggedData = flagsDoc.exists() ? flagsDoc.data() : {};
+        
+        // 全問題と照らし合わせてフラグ数をカウント
+        allQuestions.forEach(q => {
+          if (flaggedData[q.id] === true) {
+            const match = q.reference ? q.reference.match(/^[\d\.]+/) : null;
+            let refKey = 'その他';
+            if (match) {
+              const rawKey = match[0].replace(/\.$/, '');
+              let bestMatchLen = 0;
+              for (const chapter of manualData) {
+                for (const sub of chapter.subsections) {
+                  const subMatch = sub.title.match(/^[\d\.]+/);
+                  if (subMatch) {
+                    const subKey = subMatch[0].replace(/\.$/, '');
+                    if (rawKey === subKey || rawKey.startsWith(subKey + '.')) {
+                       if (subKey.length > bestMatchLen) {
+                         bestMatchLen = subKey.length;
+                         refKey = subKey;
+                       }
+                    } else if (subKey.startsWith(rawKey + '.')) {
+                       if (rawKey.length > bestMatchLen) {
+                          bestMatchLen = rawKey.length;
+                          refKey = subKey;
+                       }
+                    }
+                  }
+                }
+              }
+              if (refKey === 'その他') refKey = rawKey;
+            }
+            if (baseStats[refKey]) {
+              baseStats[refKey].flaggedCount++;
+            }
+          }
+        });
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
@@ -216,6 +256,7 @@ function ProgressViewer() {
                 <th style={{ padding: '1rem', textAlign: 'center' }}>登録問題数</th>
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--success-color)' }}>正解済みの問題数</th>
                 <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--danger-color)' }}>間違えた問題数</th>
+                <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--warning-color)' }}>不安な問題</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>学習達成率</th>
               </tr>
             </thead>

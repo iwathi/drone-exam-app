@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { Clock, AlertTriangle, Bookmark } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../AuthContext';
 
 function ExamMode({ questions }) {
@@ -13,14 +13,37 @@ function ExamMode({ questions }) {
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes
   const [sessionDocRef, setSessionDocRef] = useState(null);
+  const [flaggedIds, setFlaggedIds] = useState(new Set());
   
   useEffect(() => {
     if (currentUser) {
       setSessionDocRef(doc(collection(db, `users/${currentUser.uid}/progress`)));
+      
+      getDoc(doc(db, `users/${currentUser.uid}/userdata/flags`)).then(docSnap => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFlaggedIds(new Set(Object.keys(data).filter(k => data[k] === true)));
+        }
+      });
     }
     const shuffled = [...questions].sort(() => 0.5 - Math.random());
     setExamQuestions(shuffled.slice(0, 50));
   }, [questions, currentUser]);
+
+  const toggleFlag = async (questionId) => {
+    if (!currentUser) return;
+    const newFlagged = new Set(flaggedIds);
+    if (newFlagged.has(questionId)) {
+      newFlagged.delete(questionId);
+    } else {
+      newFlagged.add(questionId);
+    }
+    setFlaggedIds(newFlagged);
+    
+    const flagsObj = {};
+    Array.from(newFlagged).forEach(id => { flagsObj[id] = true; });
+    await setDoc(doc(db, `users/${currentUser.uid}/userdata/flags`), flagsObj);
+  };
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -116,7 +139,19 @@ function ExamMode({ questions }) {
       
       <p className="text-secondary mb-4">問題 {currentIndex + 1} / {examQuestions.length}</p>
       
-      <h3 className="mb-6">{currentQ.question}</h3>
+      <div className="flex justify-between items-start mb-6 gap-4">
+          <h3 style={{ margin: 0, flex: 1 }}>{currentQ.question}</h3>
+          <button 
+            onClick={() => toggleFlag(currentQ.id)}
+            style={{ 
+              background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem',
+              color: flaggedIds.has(currentQ.id) ? 'var(--warning-color)' : 'var(--text-secondary)'
+            }}
+            title={flaggedIds.has(currentQ.id) ? "不安な問題から外す" : "不安な問題としてマークする"}
+          >
+            <Bookmark size={24} fill={flaggedIds.has(currentQ.id) ? 'currentColor' : 'none'} />
+          </button>
+        </div>
       
       <div className="flex flex-col mb-8">
         {currentQ.options.map((option, idx) => (
