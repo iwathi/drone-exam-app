@@ -16,18 +16,19 @@ body {
   font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
-  display: flex;
-  min-height: 100vh;
-  justify-content: center;
-  align-items: center;
   -webkit-font-smoothing: antialiased;
 }
 
 #root {
   width: 100%;
   max-width: 800px;
+  margin: 0 auto;
   padding: 2rem;
   box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center on large screens if short */
 }
 
 .card {
@@ -212,4 +213,16 @@ input:focus, textarea:focus, select:focus {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+  #root {
+    padding: 0.5rem;
+    justify-content: flex-start; /* Prevent top cropping when content is long */
+  }
+  
+  .card {
+    padding: 1rem; /* Reduce padding inside the card */
+  }
 }
