@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Book } from 'lucide-react';
+import { ArrowLeft, FileText, Book, ChevronDown, ChevronUp } from 'lucide-react';
 import manualSummary from '../data/manual_summary.json';
 
 function ManualViewer() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('summary');
+  const [openChapter, setOpenChapter] = useState(0); // 0 corresponds to the first chapter by default
+
+  const toggleChapter = (index) => {
+    if (openChapter === index) {
+      setOpenChapter(null);
+    } else {
+      setOpenChapter(index);
+    }
+  };
 
   return (
     <div className="card" style={{ maxWidth: '800px' }}>
@@ -36,30 +45,48 @@ function ManualViewer() {
       </div>
 
       {activeTab === 'summary' && (
-        <div className="flex flex-col gap-6">
-          {manualSummary.map((item, index) => (
-            <div key={index} style={{ border: '1px solid var(--border-color)', borderRadius: '0.5rem', overflow: 'hidden' }}>
-              <div style={{ backgroundColor: 'var(--bg-dark)', padding: '1rem', borderBottom: '1px solid var(--border-color)' }}>
-                <h3 style={{ margin: 0 }}>{item.chapter}</h3>
-              </div>
-              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {item.subsections.map((sub, idx) => (
-                  <div key={idx}>
-                    <h4 style={{ marginBottom: '0.5rem', color: 'var(--primary-color)' }}>{sub.title}</h4>
-                    <p style={{ lineHeight: '1.6', marginBottom: '0.5rem' }}>{sub.summary}</p>
-                    <a 
-                      href={`https://www.mlit.go.jp/koku/content/001860312.pdf`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ fontSize: '0.875rem', color: 'var(--warning-color)', textDecoration: 'underline' }}
-                    >
-                      教則のPDFを開く
-                    </a>
+        <div className="flex flex-col gap-4">
+          {manualSummary.map((item, index) => {
+            const isOpen = openChapter === index;
+            return (
+              <div key={index} style={{ border: '1px solid var(--border-color)', borderRadius: '0.5rem', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    backgroundColor: isOpen ? 'var(--bg-dark)' : 'rgba(255,255,255,0.02)', 
+                    padding: '1rem', 
+                    borderBottom: isOpen ? '1px solid var(--border-color)' : 'none',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onClick={() => toggleChapter(index)}
+                >
+                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{item.chapter}</h3>
+                  {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+                {isOpen && (
+                  <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', backgroundColor: 'var(--bg-card)' }}>
+                    {item.subsections.map((sub, idx) => (
+                      <div key={idx} style={{ borderBottom: idx < item.subsections.length - 1 ? '1px dashed var(--border-color)' : 'none', paddingBottom: idx < item.subsections.length - 1 ? '1.5rem' : '0' }}>
+                        <h4 style={{ marginBottom: '0.75rem', color: 'var(--primary-color)', fontSize: '1.05rem' }}>{sub.title}</h4>
+                        <p style={{ lineHeight: '1.7', marginBottom: '1rem', color: 'var(--text-primary)' }}>{sub.summary}</p>
+                        <a 
+                          href={`https://www.mlit.go.jp/koku/content/001860312.pdf`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ fontSize: '0.875rem', color: 'var(--warning-color)', textDecoration: 'underline' }}
+                        >
+                          教則のPDFを開く
+                        </a>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
