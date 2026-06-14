@@ -98,7 +98,8 @@ function StudyMode({ questions: defaultQuestions }) {
       setSelectedAnswer(null);
       setIsAnswered(false);
     } else {
-      navigate('/');
+      const returnTo = location.state?.returnTo || '/';
+      navigate(returnTo);
     }
   };
 
@@ -114,7 +115,8 @@ function StudyMode({ questions: defaultQuestions }) {
 
   const handleFinish = () => {
     // 終了時は単にダッシュボードに戻る（保存は都度行っているため不要）
-    navigate('/');
+    const returnTo = location.state?.returnTo || '/';
+    navigate(returnTo);
   };
 
   return (

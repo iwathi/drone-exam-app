@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp } from 'lucide-react';
+import { ArrowLeft, TrendingUp, ChevronDown, ChevronUp, Bookmark, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
 import { collection, query, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -24,6 +24,14 @@ function ProgressViewer() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [stats, setStats] = useState([]);
+  const [expandedRows, setExpandedRows] = useState(new Set());
+
+  const toggleRow = (sectionKey) => {
+    const newSet = new Set(expandedRows);
+    if (newSet.has(sectionKey)) newSet.delete(sectionKey);
+    else newSet.add(sectionKey);
+    setExpandedRows(newSet);
+  };
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -136,6 +144,8 @@ function ProgressViewer() {
             }
             if (baseStats[refKey]) {
               baseStats[refKey].flaggedCount++;
+              const storedQ = baseStats[refKey].questions.find(sq => sq.id === q.id);
+              if (storedQ) storedQ.isFlagged = true;
             }
           }
         });
@@ -269,8 +279,16 @@ function ProgressViewer() {
                 const rate = row.totalAvailable > 0 ? Math.round((correctCount / row.totalAvailable) * 100) : 0;
                 
                 return (
-                  <tr key={row.section} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <Fragment key={row.section}>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '1rem', fontWeight: 'bold' }}>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => toggleRow(row.section)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, display: 'flex', alignItems: 'center' }}
+                        >
+                          {expandedRows.has(row.section) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
                       <button 
                         style={{ 
                           background: 'none', 
@@ -314,6 +332,7 @@ function ProgressViewer() {
                       >
                         {categoryMap[row.section] || row.originalRef || row.section}
                       </button>
+                      </div>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: correctCount > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{correctCount}</td>
@@ -325,6 +344,41 @@ function ProgressViewer() {
                       </div>
                     </td>
                   </tr>
+                  {expandedRows.has(row.section) && (
+                    <tr style={{ backgroundColor: 'rgba(0,0,0,0.15)' }}>
+                      <td colSpan="6" style={{ padding: '1.5rem 1rem' }}>
+                        <div className="flex flex-col gap-3">
+                          {row.questions.map((q, qIdx) => {
+                            const isCorrect = row.correctQuestionIds.has(q.id);
+                            const isIncorrect = row.incorrectQuestionIds.has(q.id);
+                            const isFlagged = q.isFlagged;
+                            
+                            return (
+                              <div key={q.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'var(--surface-color)', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                                <div style={{ flex: 1, paddingRight: '1.5rem' }}>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>問 {qIdx + 1}</span>
+                                    {isCorrect && <span className="badge badge-success" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}><CheckCircle size={12} style={{ display: 'inline', marginRight: '0.2rem' }}/>正解済</span>}
+                                    {isIncorrect && !isCorrect && <span className="badge badge-danger" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}><XCircle size={12} style={{ display: 'inline', marginRight: '0.2rem' }}/>要復習</span>}
+                                    {isFlagged && <span style={{ color: 'var(--warning-color)', display: 'flex', alignItems: 'center', fontSize: '0.75rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '0.2rem 0.5rem', borderRadius: '1rem' }}><Bookmark size={12} fill="currentColor" style={{ marginRight: '0.2rem' }}/>不安</span>}
+                                  </div>
+                                  <div style={{ fontSize: '0.95rem' }}>{q.question}</div>
+                                </div>
+                                <button 
+                                  className="btn btn-outline" 
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                                  onClick={() => navigate('/study', { state: { mode: 'single', chapterName: '問題の詳細確認', questions: [q], returnTo: '/progress' } })}
+                                >
+                                  この問題を解く
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 );
               })}
             </tbody>
