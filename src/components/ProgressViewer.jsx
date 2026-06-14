@@ -37,14 +37,43 @@ function ProgressViewer() {
       const baseStats = {};
       allQuestions.forEach(q => {
         const match = q.reference ? q.reference.match(/^[\d\.]+/) : null;
-        // マッチした文字列の末尾がドットで終わる場合は削除（例: "2.1." -> "2.1"）
-        let refKey = match ? match[0] : 'その他';
-        if (refKey.endsWith('.')) {
-          refKey = refKey.slice(0, -1);
+        let refKey = 'その他';
+        let chapterName = 'その他';
+
+        if (match) {
+          const rawKey = match[0].replace(/\.$/, '');
+          let bestMatchLen = 0;
+          for (const chapter of manualData) {
+            for (const sub of chapter.subsections) {
+              const subMatch = sub.title.match(/^[\d\.]+/);
+              if (subMatch) {
+                const subKey = subMatch[0].replace(/\.$/, '');
+                if (rawKey === subKey || rawKey.startsWith(subKey + '.')) {
+                   if (subKey.length > bestMatchLen) {
+                     bestMatchLen = subKey.length;
+                     refKey = subKey;
+                     chapterName = sub.title;
+                   }
+                } else if (subKey.startsWith(rawKey + '.')) {
+                   if (rawKey.length > bestMatchLen) {
+                      bestMatchLen = rawKey.length;
+                      refKey = subKey;
+                      chapterName = sub.title;
+                   }
+                }
+              }
+            }
+          }
+          if (chapterName === 'その他') {
+             refKey = rawKey;
+             chapterName = q.reference || 'その他';
+          }
         }
+
         if (!baseStats[refKey]) {
           baseStats[refKey] = {
             section: refKey,
+            displayName: chapterName,
             originalRef: q.reference,
             totalAvailable: 0,
             correctQuestionIds: new Set(),
@@ -73,10 +102,42 @@ function ProgressViewer() {
           const data = doc.data();
           if (data.details && Array.isArray(data.details)) {
             data.details.forEach(detail => {
-              const match = detail.reference ? detail.reference.match(/^[\d\.]+/) : null;
-              let refKey = match ? match[0] : 'その他';
-              if (refKey.endsWith('.')) {
-                refKey = refKey.slice(0, -1);
+              let refKey = 'その他';
+              let chapterName = 'その他';
+
+              if (match) {
+                const rawKey = match[0].replace(/\.$/, '');
+                
+                // Find longest matching prefix from manualData
+                let bestMatchLen = 0;
+                for (const chapter of manualData) {
+                  for (const sub of chapter.subsections) {
+                    const subMatch = sub.title.match(/^[\d\.]+/);
+                    if (subMatch) {
+                      const subKey = subMatch[0].replace(/\.$/, '');
+                      // Check prefix matching in both directions
+                      if (rawKey === subKey || rawKey.startsWith(subKey + '.')) {
+                         if (subKey.length > bestMatchLen) {
+                           bestMatchLen = subKey.length;
+                           refKey = subKey;
+                           chapterName = sub.title;
+                         }
+                      } else if (subKey.startsWith(rawKey + '.')) {
+                         if (rawKey.length > bestMatchLen) {
+                            bestMatchLen = rawKey.length;
+                            refKey = subKey;
+                            chapterName = sub.title;
+                         }
+                      }
+                    }
+                  }
+                }
+
+                // If no mapping found in summary, fallback
+                if (chapterName === 'その他') {
+                   refKey = rawKey;
+                   chapterName = detail.reference || 'その他';
+                }
               }
               
               if (baseStats[refKey] && detail.questionId) {
