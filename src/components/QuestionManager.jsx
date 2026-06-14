@@ -49,7 +49,7 @@ function QuestionManager({ questions, saveQuestions }) {
   };
 
   const handleReset = () => {
-    if (window.confirm('追加した問題は消去され、初期データ（50問）にリセットされます。よろしいですか？')) {
+    if (window.confirm(`追加した問題は消去され、初期データ（${initialQuestions.length}問）にリセットされます。よろしいですか？`)) {
       setLocalQuestions([...initialQuestions]);
       saveQuestions(initialQuestions);
       alert('初期データにリセットしました！');

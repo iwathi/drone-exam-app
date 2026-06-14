@@ -78,10 +78,12 @@ function ProgressViewer() {
             totalAvailable: 0,
             correctQuestionIds: new Set(),
             incorrectQuestionIds: new Set(),
-            flaggedCount: 0
+            flaggedCount: 0,
+            questions: []
           };
         }
         baseStats[refKey].totalAvailable++;
+        baseStats[refKey].questions.push(q);
       });
 
       // 配列に変換してソート（初期状態を作成）
@@ -285,15 +287,27 @@ function ProgressViewer() {
                         onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                         title="この項目の重点学習を開始する"
                         onClick={() => {
-                          const chapterQuestions = allQuestions.filter(q => {
-                            const ref = q.reference || '';
-                            return ref.startsWith(row.section);
-                          });
+                          const excludeCorrect = window.confirm(
+                            "正解済みの問題を除外して出題しますか？\n\n" +
+                            "「OK」を押すと未正解・要復習の問題のみ出題されます。\n" +
+                            "「キャンセル」を押すとすべての問題が出題されます。"
+                          );
+                          
+                          let finalQuestions = row.questions || [];
+                          if (excludeCorrect) {
+                            finalQuestions = finalQuestions.filter(q => !row.correctQuestionIds.has(q.id));
+                          }
+                          
+                          if (finalQuestions.length === 0) {
+                            alert("出題対象の問題がありませんでした。（全て正解済みです）");
+                            return;
+                          }
+                          
                           navigate('/study', { 
                             state: { 
                               mode: 'chapter', 
                               chapterName: categoryMap[row.section] || row.originalRef || row.section, 
-                              questions: chapterQuestions 
+                              questions: finalQuestions 
                             } 
                           });
                         }}
