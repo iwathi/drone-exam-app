@@ -47,8 +47,8 @@ function ProgressViewer() {
             section: refKey,
             originalRef: q.reference,
             totalAvailable: 0,
-            correct: 0,
-            incorrect: 0
+            correctQuestionIds: new Set(),
+            incorrectQuestionIds: new Set()
           };
         }
         baseStats[refKey].totalAvailable++;
@@ -79,11 +79,11 @@ function ProgressViewer() {
                 refKey = refKey.slice(0, -1);
               }
               
-              if (baseStats[refKey]) {
+              if (baseStats[refKey] && detail.questionId) {
                 if (detail.isCorrect) {
-                  baseStats[refKey].correct++;
+                  baseStats[refKey].correctQuestionIds.add(detail.questionId);
                 } else {
-                  baseStats[refKey].incorrect++;
+                  baseStats[refKey].incorrectQuestionIds.add(detail.questionId);
                 }
               }
             });
@@ -146,15 +146,16 @@ function ProgressViewer() {
               <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.05)' }}>
                 <th style={{ padding: '1rem' }}>教則の項目</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>登録問題数</th>
-                <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--success-color)' }}>正解した回数</th>
-                <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--danger-color)' }}>間違えた回数</th>
-                <th style={{ padding: '1rem', textAlign: 'center' }}>正答率</th>
+                <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--success-color)' }}>正解済みの問題数</th>
+                <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--danger-color)' }}>間違えた問題数</th>
+                <th style={{ padding: '1rem', textAlign: 'center' }}>学習達成率</th>
               </tr>
             </thead>
             <tbody>
               {stats.map((row) => {
-                const totalAttempts = row.correct + row.incorrect;
-                const rate = totalAttempts > 0 ? Math.round((row.correct / totalAttempts) * 100) : 0;
+                const correctCount = row.correctQuestionIds.size;
+                const incorrectCount = row.incorrectQuestionIds.size;
+                const rate = row.totalAvailable > 0 ? Math.round((correctCount / row.totalAvailable) * 100) : 0;
                 
                 return (
                   <tr key={row.section} style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -192,16 +193,12 @@ function ProgressViewer() {
                       </button>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.totalAvailable}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center', color: row.correct > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{row.correct}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center', color: row.incorrect > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{row.incorrect}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: correctCount > 0 ? 'var(--success-color)' : 'inherit', fontWeight: 'bold' }}>{correctCount}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: incorrectCount > 0 ? 'var(--danger-color)' : 'inherit', fontWeight: 'bold' }}>{incorrectCount}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      {totalAttempts > 0 ? (
-                        <div style={{ color: rate >= 80 ? 'var(--success-color)' : rate >= 60 ? 'var(--warning-color)' : 'var(--danger-color)', fontWeight: 'bold' }}>
-                          {rate}%
-                        </div>
-                      ) : (
-                        <span className="text-secondary">-</span>
-                      )}
+                      <div style={{ color: rate >= 100 ? 'var(--success-color)' : rate >= 50 ? 'var(--warning-color)' : 'var(--danger-color)', fontWeight: 'bold' }}>
+                        {rate}%
+                      </div>
                     </td>
                   </tr>
                 );
