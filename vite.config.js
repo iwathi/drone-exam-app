@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/drone-exam-app/',
+  build: {
+    target: 'es2015'
+  }
 })

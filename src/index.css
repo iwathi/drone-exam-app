@@ -28,7 +28,6 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Center on large screens if short */
 }
 
 .card {
@@ -219,7 +218,6 @@ input:focus, textarea:focus, select:focus {
 @media (max-width: 600px) {
   #root {
     padding: 0.5rem;
-    justify-content: flex-start; /* Prevent top cropping when content is long */
   }
   
   .card {
