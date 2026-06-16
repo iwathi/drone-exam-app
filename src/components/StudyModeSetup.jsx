@@ -79,11 +79,11 @@ function StudyModeSetup({ questions }) {
                 borderRadius: '0.5rem'
               }}
             >
-              <option value="2">第2章: 基本的な心得</option>
-              <option value="3">第3章: 航空法・関係法令</option>
-              <option value="4">第4章: 機体システム・飛行原理</option>
-              <option value="5">第5章: 操縦者及び運航体制</option>
-              <option value="6">第6章: リスク管理</option>
+              <option value="2">第2章: 無人航空機操縦者の心得</option>
+              <option value="3">第3章: 無人航空機に関する規則</option>
+              <option value="4">第4章: 無人航空機のシステム</option>
+              <option value="5">第5章: 無人航空機の操縦者及び運航体制</option>
+              <option value="6">第6章: 運航上のリスク管理</option>
             </select>
           </div>
           <button className="btn w-full" style={{ backgroundColor: 'var(--danger-color)', color: '#fff' }} onClick={handleStartChapter}>重点モードで開始</button>
